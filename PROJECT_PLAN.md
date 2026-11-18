@@ -30,7 +30,7 @@ Generate only in-bounds, non-wall neighbors, with one unit of cost per move. Ord
 
 ### 3. Connect the terminal entry point
 
-Use `main.py` to load the bundled `detour.txt` fixture by default and accept an optional path for alternate maps. Display the original grid and tile legend before searching. Print the coordinate sequence and step count on success. Print `No path to extraction.` for a valid unreachable map. Report malformed or missing files with a readable error and a nonzero exit status.
+Use `main.py` to accept a map file directly for the repeatable checkpoint demo. When run interactively without a file, prompt for rows, columns, and one of five fixed layouts or a new random layout. Display the original grid and tile legend before searching. Print the coordinate sequence and step count on success. Print `No path to extraction.` for a valid unreachable map. Report malformed or missing files with a readable error and a nonzero exit status.
 
 Use `--trace` to show each selected tile, the frontier, and the neighbor decisions. At the goal, use the zero remaining-moves estimate and the lowest score in the queue to explain why A* can stop. On the unreachable map, demonstrate what happens when the frontier empties.
 
@@ -42,12 +42,12 @@ Use `--trace` to show each selected tile, the frontier, and the neighbor decisio
 ```sh
 python3 -m unittest discover -s tests -v
 python3 main.py
-python3 main.py --trace
+python3 main.py --trace maps/detour.txt
 python3 main.py maps/direct.txt
 python3 main.py --trace maps/unreachable.txt
 ```
 
-**Exit criteria.** The tests pass, the default run prints a valid six-move detour, and the unreachable run finishes cleanly. During the demo, explain why the wall forces the detour and how the estimated moves remaining guide the search. Moving patrols and replanning follow this checkpoint.
+**Exit criteria.** The tests pass, the bundled detour fixture prints a valid six-move path, and the unreachable run finishes cleanly. During the demo, explain why the wall forces the detour and how the estimated moves remaining guide the search. Moving patrols and replanning follow this checkpoint.
 
 ## After the checkpoint — Add the dynamic simulation
 

@@ -8,7 +8,7 @@ Downed Airman is a CS471 Python simulation game. The airman moves up, down, left
 
 The repository currently contains the worksheet and this guide. As implementation begins, keep map parsing, A* search, and simulation rules independently testable. Store predefined text maps separately from Python code and document the map symbols in the README. Use four spaces for indentation, `snake_case` for Python functions and modules, and descriptive names for map fixtures and tests.
 
-The Lesson 36 checkpoint runs from a terminal, displays a predefined text map without prompting, and prints the path and step count. Use `python3 main.py --trace` to demonstrate exploration and explain why A* stops. Keep the exact run and test commands in the README current.
+Run `python3 main.py` in a terminal to choose the grid size and layout. Use `python3 main.py --trace maps/detour.txt` to replay the Lesson 36 fixture without prompting and explain why A* stops. Keep the exact run and test commands in the README current.
 
 Use descriptive names in code and spell out search terms in terminal output, comments, and walkthroughs. Introduce each map symbol and score before using it in the demo.
 

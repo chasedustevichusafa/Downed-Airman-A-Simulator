@@ -1,6 +1,6 @@
 # Downed Airman: A* Simulator
 
-Downed Airman is a CS471 Python project that uses A* to find paths through a fictional 2D grid. The Lesson 36 checkpoint is a terminal demo that loads a predefined text map and prints the path and step count. The Lesson 41 evaluation compares A* with Dijkstra on static maps and measures path cost, nodes expanded, and extraction rate in reproducible dynamic simulations.
+Downed Airman is a CS471 Python project that uses A* to find paths through a fictional 2D grid. The Lesson 36 checkpoint is a terminal demo that displays the starting grid and prints the path and step count. The Lesson 41 evaluation compares A* with Dijkstra on static maps and measures path cost, nodes expanded, and extraction rate in reproducible dynamic simulations.
 
 ## Project Status
 
@@ -13,11 +13,23 @@ The Lesson 36 terminal checkpoint is implemented. It uses Python 3.7 or later an
 
 ## Run the Lesson 36 demo
 
-Run these commands from the repository root. The first command loads the bundled detour map without prompting. Each demo prints the original map and its legend before the search begins.
+Run `python3 main.py` from the repository root in a terminal. Enter the number of rows and columns, each from 5 to 40, then choose a layout. Choices 1 through 5 are fixed for each size.
+
+1. Open grid
+2. Middle gate
+3. Bottom gate
+4. Staggered gates
+5. Wide barrier
+6. New random grid
+
+Choice 6 guarantees a walkable route and records the layout in the local `.random-map-history.sqlite3` file. It avoids the five presets and every random layout recorded for that size. Keep the history file to preserve that guarantee across runs. If the available layouts ever run out, the script asks you to choose another size. Git ignores the history file.
+
+Each run prints the original map and its legend before the search. Use `--trace` to see the search or pass a text map directly to skip the menu. With redirected input and no map file, the script loads the bundled detour map unless you pass `--choose-map`.
 
 ```sh
 python3 main.py
 python3 main.py --trace
+python3 main.py maps/detour.txt
 python3 main.py maps/direct.txt
 python3 main.py maps/unreachable.txt
 python3 -m unittest discover -s tests -v
@@ -33,7 +45,7 @@ Maps are rectangular UTF-8 text grids. Use exactly one `S` for the start and one
 
 ## How A* works
 
-Run `python3 main.py --trace` to follow the search on the detour map. Each snapshot shows the tile just removed from the queue (`@`), the tiles waiting in the frontier (`o`), and the tiles already expanded (`x`). Below the grid, A* explains its decisions for each walkable neighbor. At the goal, it reports the lowest remaining frontier score if one exists and explains why a cheaper route is impossible. Try `python3 main.py --trace maps/unreachable.txt` to see how the search ends when the frontier runs out.
+Run `python3 main.py --trace maps/detour.txt` to follow the search on the bundled detour map. Each snapshot shows the tile just removed from the queue (`@`), the tiles waiting in the frontier (`o`), and the tiles already expanded (`x`). Below the grid, A* explains its decisions for each walkable neighbor. At the goal, it reports the lowest remaining frontier score if one exists and explains why a cheaper route is impossible. Try `python3 main.py --trace maps/unreachable.txt` to see how the search ends when the frontier runs out.
 
 The terminal colors the start green, the goal magenta, and walls red. During the search, the selected tile is yellow, queued tiles are cyan, and checked tiles are blue. Open tiles use the terminal’s default text color. Redirected output uses plain text by default. Use `--color never` to turn colors off or `--color always` to force them.
 
@@ -44,6 +56,11 @@ The terminal colors the start green, the goal magenta, and walls red. During the
 On the detour map, the start at `(0, 0)` has zero moves so far and four estimated moves remaining. A wall blocks the move to the right. Going down to `(1, 0)` gives one move so far plus five estimated moves remaining, for an estimated total of six. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-18 14:04 MST — Add map size and layout selection
+
+- Added the startup menu in `main.py` and layout generation in `map_choices.py`. Rows and columns can each range from 5 to 40. Each size has five fixed layouts and a random layout that excludes presets and prior random selections through local history.
+- Updated the checkpoint instructions to show both the menu and the direct fixture commands. All thirteen tests passed, covering menu input validation, distinct and solvable presets, and twenty nonrepeating random maps.
 
 ### 2026-11-18 14:00 MST — Trace only legal moves
 

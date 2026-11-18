@@ -7,6 +7,7 @@ import sys
 from tempfile import TemporaryDirectory
 import unittest
 
+from map_choices import preset_grids, random_grid
 from map_loader import load_map, parse_map
 from pathfinding import find_path
 
@@ -52,13 +53,40 @@ class SearchTests(unittest.TestCase):
         self.assertIsNone(find_path(load_map(MAPS / "unreachable.txt")))
 
 
+class MapChoiceTests(unittest.TestCase):
+    def test_five_presets_are_distinct_repeatable_and_solvable(self):
+        for height, width in ((5, 5), (5, 40), (40, 5), (40, 40)):
+            with self.subTest(height=height, width=width):
+                presets = preset_grids(height, width)
+                self.assertEqual(presets, preset_grids(height, width))
+                self.assertEqual(len({grid.rows for grid in presets}), 5)
+                for grid in presets:
+                    self.assertEqual(len(grid.rows), height)
+                    self.assertTrue(all(len(row) == width for row in grid.rows))
+                    self.assertIsNotNone(find_path(grid))
+
+    def test_random_grids_use_saved_history_and_exclude_presets(self):
+        presets = preset_grids(5, 5)
+        seen = {grid.rows for grid in presets}
+        with TemporaryDirectory() as directory:
+            history = Path(directory) / "history.sqlite3"
+            for run_number in range(20):
+                with self.subTest(run_number=run_number):
+                    grid = random_grid(5, 5, presets, history)
+                    self.assertNotIn(grid.rows, seen)
+                    self.assertIsNotNone(find_path(grid))
+                    seen.add(grid.rows)
+            self.assertTrue(history.is_file())
+
+
 class TerminalTests(unittest.TestCase):
-    def run_demo(self, directory, *args):
+    def run_demo(self, directory, *args, answers=None):
         return subprocess.run(
             [sys.executable, str(ROOT / "main.py"), *args],
             cwd=directory,
             capture_output=True,
             text=True,
+            input=answers,
         )
 
     def test_default_map_works_outside_repository(self):
@@ -69,6 +97,16 @@ class TerminalTests(unittest.TestCase):
         self.assertIn("Path (row, column):", result.stdout)
         self.assertIn("Steps: 6", result.stdout)
         self.assertIn("Path cost: 6", result.stdout)
+
+    def test_menu_accepts_size_and_reprompts_for_invalid_input(self):
+        result = self.run_demo(ROOT, "--choose-map", answers="4\n5\n7\n9\n1\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Enter a whole number from 5 to 40.", result.stdout)
+        self.assertIn("Enter a whole number from 1 to 6.", result.stdout)
+        for option in range(1, 7):
+            self.assertIn(f"  {option}. ", result.stdout)
+        self.assertIn("Starting map (Open grid)\nS.....E\n" + ".......\n" * 4, result.stdout)
+        self.assertIn("Steps: 6", result.stdout)
 
     def test_unreachable_map_is_a_valid_result(self):
         result = self.run_demo(ROOT, "maps/unreachable.txt")
