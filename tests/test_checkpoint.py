@@ -1,0 +1,83 @@
+"""Verify parsing, path optimality, and the terminal checkpoint entry point."""
+
+from pathlib import Path
+import subprocess
+import sys
+from tempfile import TemporaryDirectory
+import unittest
+
+from map_loader import load_map, parse_map
+from pathfinding import find_path
+
+
+ROOT = Path(__file__).resolve().parent.parent
+MAPS = ROOT / "maps"
+
+
+class MapTests(unittest.TestCase):
+    def test_reads_endpoints_and_rejects_out_of_bounds_tiles(self):
+        grid = parse_map("S#..E\r\n.....\r\n")
+        self.assertEqual(grid.start, (0, 0))
+        self.assertEqual(grid.goal, (0, 4))
+        self.assertTrue(grid.is_walkable((1, 0)))
+        for tile in ((0, 1), (-1, 0), (0, -1), (2, 0), (0, 5)):
+            with self.subTest(tile=tile):
+                self.assertFalse(grid.is_walkable(tile))
+
+    def test_rejects_invalid_maps(self):
+        for text in ("", "\nSE", "SE\n.", "S?E", "S..", ".E", "SSE", "SEE"):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
+                    parse_map(text)
+
+
+class SearchTests(unittest.TestCase):
+    def test_reachable_maps_have_valid_optimal_paths(self):
+        for filename, expected_steps in (("direct.txt", 4), ("detour.txt", 6)):
+            with self.subTest(filename=filename):
+                grid = load_map(MAPS / filename)
+                path, cost = find_path(grid)
+                self.assertEqual(path[0], grid.start)
+                self.assertEqual(path[-1], grid.goal)
+                self.assertEqual(len(path) - 1, expected_steps)
+                self.assertEqual(cost, expected_steps)
+                for tile in path:
+                    self.assertTrue(grid.is_walkable(tile))
+                for (row, column), (next_row, next_column) in zip(path, path[1:]):
+                    self.assertEqual(abs(row - next_row) + abs(column - next_column), 1)
+
+    def test_unreachable_map_has_no_path(self):
+        self.assertIsNone(find_path(load_map(MAPS / "unreachable.txt")))
+
+
+class TerminalTests(unittest.TestCase):
+    def run_demo(self, directory, *args):
+        return subprocess.run(
+            [sys.executable, str(ROOT / "main.py"), *args],
+            cwd=directory,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_default_map_works_outside_repository(self):
+        with TemporaryDirectory() as directory:
+            result = self.run_demo(directory)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Path (row, column):", result.stdout)
+        self.assertIn("Steps: 6", result.stdout)
+        self.assertIn("Path cost: 6", result.stdout)
+
+    def test_unreachable_map_is_a_valid_result(self):
+        result = self.run_demo(ROOT, "maps/unreachable.txt")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "No path to extraction.")
+
+    def test_missing_and_invalid_files_return_errors(self):
+        with TemporaryDirectory() as directory:
+            (Path(directory) / "invalid.txt").write_text("S?E\n", encoding="utf-8")
+            for filename in ("missing.txt", "invalid.txt"):
+                with self.subTest(filename=filename):
+                    result = self.run_demo(directory, filename)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(f"Could not load {filename}", result.stderr)
+                    self.assertNotIn("Traceback", result.stderr)

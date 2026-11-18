@@ -12,13 +12,39 @@ The CS471 scoping worksheet defines the deliverables. The instructor’s feedbac
 
 ## Lesson 36 — Terminal checkpoint
 
-1. Write the Python map parser and add three text fixtures under `maps/`. Include a direct route, a forced detour, and an unreachable extraction tile. Record the expected step count and cost for each reachable fixture.
-2. Implement four-direction A* with Manhattan distance. Return the path and total cost, or a no-route result. Keep the parser, search, and terminal entry point independently testable.
-3. Add a terminal command that loads a default fixture without prompting. Print the path and step count on success and a clear message when no path exists. An optional map argument can make switching fixtures during the demo easier.
-4. Test bounds, walls, malformed maps, and unreachable extraction. Assert the expected cost and path validity when several equal-cost paths are possible. Add the verified run and test commands to the README.
-5. Rehearse from a clean checkout. Demonstrate the forced detour, show its known step count, and run the unreachable map to show that the program exits cleanly.
+**Deliverable.** A Python 3 program that opens a predefined text map without prompting, finds an optimal four-direction path with A*, and prints the path and step count. This checkpoint uses static maps and Python’s standard library.
 
-**Exit criteria.** A teammate can follow the README, run the terminal demo, and verify the expected results without editing code. The checkpoint requires neither a GUI nor moving patrols.
+### 1. Define maps and write the parser
+
+Put text fixtures in `maps/` and the parser in `map_loader.py`. Use zero-based `(row, column)` coordinates with `(0, 0)` at the upper left. Accept rectangular maps with exactly one `S` and one `E`. Reject empty maps, uneven rows, unknown symbols, and missing or repeated endpoints with a clear error.
+
+| Fixture | Rows, top to bottom | Expected result |
+| --- | --- | --- |
+| `direct.txt` | `S...E` | 4 moves, cost 4 |
+| `detour.txt` | `S#..E` / `.....` | 6 moves, cost 6 |
+| `unreachable.txt` | `S#E` / `.#.` | No path |
+
+### 2. Implement A* in `pathfinding.py`
+
+Generate only in-bounds, non-wall neighbors, with one unit of cost per move. Use a priority queue ordered by `g + h`, where `g` is the best known cost from the start and `h` is Manhattan distance to the goal. Track predecessors and update them when a cheaper route to a tile is found. Skip stale queue entries and stop when the goal is popped. Return the reconstructed path including both endpoints and its cost, or a no-path result if the queue empties. Compute steps as `len(path) - 1`.
+
+### 3. Connect the terminal entry point
+
+Use `main.py` to load the bundled `detour.txt` fixture by default and accept an optional path for alternate maps. Print the coordinate sequence and step count on success. Print `No path to extraction.` for a valid unreachable map. Report malformed or missing files with a readable error and a nonzero exit status.
+
+### 4. Test and rehearse
+
+- Use `unittest` in `tests/` for parser validation and the three known outcomes. Check that successful paths start at `S`, end at `E`, avoid walls, and move exactly one tile per step. Check optimal cost and step count so equally short paths can pass.
+- After implementation, verify the commands below from a clean checkout and record them with the map symbols in `README.md`.
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 main.py
+python3 main.py maps/direct.txt
+python3 main.py maps/unreachable.txt
+```
+
+**Exit criteria.** The tests pass, the default run prints a valid six-move detour, and the unreachable run finishes cleanly. During the demo, explain why the wall forces the detour and how Manhattan distance guides the search. Moving patrols and replanning follow this checkpoint.
 
 ## After the checkpoint — Add the dynamic simulation
 
