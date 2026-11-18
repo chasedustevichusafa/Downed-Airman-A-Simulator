@@ -1,4 +1,4 @@
-# Downed Airman: A Simulator
+# Downed Airman: A* Simulator
 
 Downed Airman is a CS471 Python project that uses A* to find paths through a fictional 2D grid. The Lesson 36 checkpoint is a terminal demo that loads a predefined text map and prints the path and step count. The Lesson 41 evaluation compares A* with Dijkstra on static maps and measures path cost, nodes expanded, and extraction rate in reproducible dynamic simulations.
 
