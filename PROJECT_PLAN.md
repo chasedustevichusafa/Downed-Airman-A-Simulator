@@ -30,7 +30,7 @@ Generate only in-bounds, non-wall neighbors, with one unit of cost per move. Ord
 
 ### 3. Connect the terminal entry point
 
-Use `main.py` to accept a map file directly for the repeatable checkpoint demo. When run interactively without a file, prompt for rows, columns, and one of five fixed layouts or a new random layout. Display the original grid and tile legend before searching. Print the coordinate sequence and step count on success. Print `No path to extraction.` for a valid unreachable map. Report malformed or missing files with a readable error and a nonzero exit status.
+Use `main.py` to accept a map file directly for the repeatable checkpoint demo. When run interactively without a file, prompt for rows, columns, and a layout. Option 7 opens a dead-end maze and shows the search trace automatically. Display the original grid and tile legend before searching. Print the coordinate sequence and step count on success. Print `No path to extraction.` for a valid unreachable map. Report malformed or missing files with a readable error and a nonzero exit status.
 
 Use `--trace` to show each selected tile, the frontier, and the neighbor decisions. At the goal, use the zero remaining-moves estimate and the lowest score in the queue to explain why A* can stop. On the unreachable map, demonstrate what happens when the frontier empties.
 

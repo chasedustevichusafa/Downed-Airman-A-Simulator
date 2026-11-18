@@ -13,6 +13,8 @@ MINIMUM_SIZE = 5
 MAXIMUM_SIZE = 40
 PRESET_NAMES = ("Open grid", "Middle gate", "Bottom gate", "Staggered gates", "Wide barrier")
 RANDOM_OPTION = len(PRESET_NAMES) + 1
+DEAD_END_OPTION = RANDOM_OPTION + 1
+DEAD_END_NAME = "Dead-end maze"
 
 
 def _build_grid(height: int, width: int, walls: Set[Position]) -> GridMap:
@@ -38,6 +40,23 @@ def preset_grids(height: int, width: int) -> Tuple[GridMap, ...]:
         {(row, column) for row in range(center_row) for column in range(1, width - 1)},
     )
     return tuple(_build_grid(height, width, walls) for walls in wall_layouts)
+
+
+def dead_end_grid(height: int, width: int) -> GridMap:
+    """Build branches that head toward the goal and end a wall short."""
+    # The left edge, bottom row, and right edge form the only route to
+    # the goal. A wall separates each branch from the right edge.
+    branch_rows = range(0, height - 2, 2)
+    walls = {
+        (row, column)
+        for row in range(height - 1)
+        for column in range(1, width - 1)
+        if row not in branch_rows or column == width - 2
+    }
+    # The branches open onto the left edge and stay separate from one another
+    # and from the bottom row. Their tiles look closer to the goal than
+    # the bottom detour does, so A* investigates them first.
+    return _build_grid(height, width, walls)
 
 
 def _reserve_layout(

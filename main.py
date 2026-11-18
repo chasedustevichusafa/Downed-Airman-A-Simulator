@@ -8,10 +8,13 @@ import sys
 from typing import Tuple
 
 from map_choices import (
+    DEAD_END_NAME,
+    DEAD_END_OPTION,
     MAXIMUM_SIZE,
     MINIMUM_SIZE,
     PRESET_NAMES,
     RANDOM_OPTION,
+    dead_end_grid,
     preset_grids,
     random_grid,
 )
@@ -48,8 +51,8 @@ def read_number(prompt: str, minimum: int, maximum: int) -> int:
         print(f"Enter a whole number from {minimum} to {maximum}.")
 
 
-def choose_map(history_file: Path) -> Tuple[GridMap, str]:
-    """Prompt for dimensions, then list the six choices for that size."""
+def choose_map(history_file: Path) -> Tuple[GridMap, str, bool]:
+    """Return the chosen map, its display name, and whether to trace by default."""
     height = read_number("Number of rows", MINIMUM_SIZE, MAXIMUM_SIZE)
     width = read_number("Number of columns", MINIMUM_SIZE, MAXIMUM_SIZE)
     presets = preset_grids(height, width)
@@ -57,11 +60,14 @@ def choose_map(history_file: Path) -> Tuple[GridMap, str]:
     for number, name in enumerate(PRESET_NAMES, start=1):
         print(f"  {number}. {name}")
     print(f"  {RANDOM_OPTION}. New random grid")
-    choice = read_number("Map choice", 1, RANDOM_OPTION)
+    print(f"  {DEAD_END_OPTION}. {DEAD_END_NAME} (show search trace)")
+    choice = read_number("Map choice", 1, DEAD_END_OPTION)
     print()
     if choice == RANDOM_OPTION:
-        return random_grid(height, width, presets, history_file), "New random grid"
-    return presets[choice - 1], PRESET_NAMES[choice - 1]
+        return random_grid(height, width, presets, history_file), "New random grid", False
+    if choice == DEAD_END_OPTION:
+        return dead_end_grid(height, width), DEAD_END_NAME, True
+    return presets[choice - 1], PRESET_NAMES[choice - 1], False
 
 
 def main() -> int:
@@ -87,9 +93,11 @@ def main() -> int:
     if options.map_file is not None and options.choose_map:
         parser.error("Choose either a map file or --choose-map.")
 
+    trace_search = options.trace
     try:
         if options.choose_map or (options.map_file is None and sys.stdin.isatty()):
-            grid, map_name = choose_map(RANDOM_MAP_HISTORY)
+            grid, map_name, trace_by_default = choose_map(RANDOM_MAP_HISTORY)
+            trace_search = trace_search or trace_by_default
         else:
             map_file = options.map_file or DEFAULT_MAP
             grid = load_map(map_file)
@@ -123,7 +131,7 @@ def main() -> int:
     )
     print("Coordinates use (row, column), with (0, 0) at the upper left.\n", flush=True)
 
-    result = find_path(grid, trace=print if options.trace else None, format_tile=format_tile)
+    result = find_path(grid, trace=print if trace_search else None, format_tile=format_tile)
     if result is None:
         print("No path to extraction.")
         return 0

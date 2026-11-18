@@ -102,11 +102,22 @@ class TerminalTests(unittest.TestCase):
         result = self.run_demo(ROOT, "--choose-map", answers="4\n5\n7\n9\n1\n")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Enter a whole number from 5 to 40.", result.stdout)
-        self.assertIn("Enter a whole number from 1 to 6.", result.stdout)
-        for option in range(1, 7):
+        self.assertIn("Enter a whole number from 1 to 7.", result.stdout)
+        for option in range(1, 8):
             self.assertIn(f"  {option}. ", result.stdout)
         self.assertIn("Starting map (Open grid)\nS . . . . . E\n" + ". . . . . . .\n" * 4, result.stdout)
         self.assertIn("Steps: 6", result.stdout)
+
+    def test_dead_end_maze_traces_tiles_outside_the_final_route(self):
+        result = self.run_demo(ROOT, "--choose-map", answers="9\n13\n7\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Starting map (Dead-end maze)", result.stdout)
+        final_path = next(line for line in result.stdout.splitlines() if line.startswith("Path ("))
+        for dead_end in ("(0, 10)", "(2, 10)", "(4, 10)", "(6, 10)"):
+            with self.subTest(dead_end=dead_end):
+                self.assertIn(f"Select {dead_end} from the queue", result.stdout)
+                self.assertNotIn(dead_end, final_path)
+        self.assertIn("Steps: 28", result.stdout)
 
     def test_unreachable_map_is_a_valid_result(self):
         result = self.run_demo(ROOT, "maps/unreachable.txt")

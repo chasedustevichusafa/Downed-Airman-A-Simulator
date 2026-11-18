@@ -21,6 +21,9 @@ Run `python3 main.py` from the repository root in a terminal. Enter the number o
 4. Staggered gates
 5. Wide barrier
 6. New random grid
+7. Dead-end maze
+
+Choice 7 turns on the search trace automatically. Try 9 rows and 13 columns to see A* investigate four branches that end near the goal. The shortest route goes around them along the bottom edge and takes 28 moves.
 
 Choice 6 guarantees a walkable route and records the layout in the local `.random-map-history.sqlite3` file. It avoids the five presets and every random layout recorded for that size. Keep the history file to preserve that guarantee across runs. If the available layouts ever run out, the script asks you to choose another size. Git ignores the history file.
 
@@ -56,6 +59,11 @@ The terminal leaves one space between tiles so equal row and column counts look 
 On the detour map, the start at `(0, 0)` has zero moves so far and four estimated moves remaining. A wall blocks the move to the right. Going down to `(1, 0)` gives one move so far plus five estimated moves remaining, for an estimated total of six. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-18 14:13 MST — Add a dead-end maze for the search demo
+
+- Added option 7 in `main.py` and a repeatable maze in `map_choices.py`. The maze gives A* several promising branches to explore before it reaches the goal by the bottom row. The menu choice turns on the trace automatically.
+- All fourteen tests passed. The new terminal test verifies that A* explores four dead ends outside the final 28-move path on a 9 × 13 grid.
 
 ### 2026-11-18 14:07 MST — Space terminal map columns
 
