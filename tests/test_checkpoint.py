@@ -93,7 +93,7 @@ class TerminalTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             result = self.run_demo(directory)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(result.stdout.startswith("Starting map (detour.txt)\nS#..E\n.....\n"))
+        self.assertTrue(result.stdout.startswith("Starting map (detour.txt)\nS # . . E\n. . . . .\n"))
         self.assertIn("Path (row, column):", result.stdout)
         self.assertIn("Steps: 6", result.stdout)
         self.assertIn("Path cost: 6", result.stdout)
@@ -105,13 +105,13 @@ class TerminalTests(unittest.TestCase):
         self.assertIn("Enter a whole number from 1 to 6.", result.stdout)
         for option in range(1, 7):
             self.assertIn(f"  {option}. ", result.stdout)
-        self.assertIn("Starting map (Open grid)\nS.....E\n" + ".......\n" * 4, result.stdout)
+        self.assertIn("Starting map (Open grid)\nS . . . . . E\n" + ". . . . . . .\n" * 4, result.stdout)
         self.assertIn("Steps: 6", result.stdout)
 
     def test_unreachable_map_is_a_valid_result(self):
         result = self.run_demo(ROOT, "maps/unreachable.txt")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(result.stdout.startswith("Starting map (unreachable.txt)\nS#E\n.#.\n"))
+        self.assertTrue(result.stdout.startswith("Starting map (unreachable.txt)\nS # E\n. # .\n"))
         self.assertTrue(result.stdout.rstrip().endswith("No path to extraction."))
 
     def test_trace_shows_search_and_why_goal_is_optimal(self):
@@ -119,8 +119,8 @@ class TerminalTests(unittest.TestCase):
             (Path(directory) / "open.txt").write_text("S.E\n...\n", encoding="utf-8")
             result = self.run_demo(directory, "--trace", "open.txt")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(result.stdout.startswith("Starting map (open.txt)\nS.E\n...\n"))
-        self.assertIn("@.E\n...", result.stdout)
+        self.assertTrue(result.stdout.startswith("Starting map (open.txt)\nS . E\n. . .\n"))
+        self.assertIn("@ . E\n. . .", result.stdout)
         self.assertIn("moves so far: 1, estimated moves remaining: 3", result.stdout)
         self.assertLess(
             result.stdout.index("(0, 2): add to queue (moves so far: 2"),

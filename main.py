@@ -116,7 +116,7 @@ def main() -> int:
 
     print(f"Starting map ({map_name})")
     for row in grid.rows:
-        print("".join(format_tile(symbol) for symbol in row))
+        print(" ".join(format_tile(symbol) for symbol in row))
     print(
         f"Map symbols: {format_tile('S')} start, {format_tile('E')} extraction goal, "
         f"{format_tile('#')} impassable wall, . open tile."

@@ -47,7 +47,7 @@ Maps are rectangular UTF-8 text grids. Use exactly one `S` for the start and one
 
 Run `python3 main.py --trace maps/detour.txt` to follow the search on the bundled detour map. Each snapshot shows the tile just removed from the queue (`@`), the tiles waiting in the frontier (`o`), and the tiles already expanded (`x`). Below the grid, A* explains its decisions for each walkable neighbor. At the goal, it reports the lowest remaining frontier score if one exists and explains why a cheaper route is impossible. Try `python3 main.py --trace maps/unreachable.txt` to see how the search ends when the frontier runs out.
 
-The terminal colors the start green, the goal magenta, and walls red. During the search, the selected tile is yellow, queued tiles are cyan, and checked tiles are blue. Open tiles use the terminal’s default text color. Redirected output uses plain text by default. Use `--color never` to turn colors off or `--color always` to force them.
+The terminal leaves one space between tiles so equal row and column counts look closer to square in a typical terminal font. It colors the start green, the goal magenta, and walls red. During the search, the selected tile is yellow, queued tiles are cyan, and checked tiles are blue. Open tiles use the terminal’s default text color. Redirected output uses plain text by default. Use `--color never` to turn colors off or `--color always` to force them.
 
 1. **Score routes.** Moves so far counts the moves in the best route found to a tile. Estimated moves remaining counts the horizontal and vertical moves needed to reach the goal on an open grid. Estimated total moves adds the two values. Walls can only add moves, so the estimate never exceeds the moves actually needed.
 2. **Check neighbors.** Select the tile with the lowest estimated total moves from the frontier, the queue of tiles waiting to be checked. The map supplies only legal one-step destinations. When a route improves the number of moves needed to reach a neighbor, remember the previous tile and add the neighbor to the queue.
@@ -56,6 +56,11 @@ The terminal colors the start green, the goal magenta, and walls red. During the
 On the detour map, the start at `(0, 0)` has zero moves so far and four estimated moves remaining. A wall blocks the move to the right. Going down to `(1, 0)` gives one move so far plus five estimated moves remaining, for an estimated total of six. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-18 14:07 MST — Space terminal map columns
+
+- Added one space between columns in the starting map and search snapshots. Updated terminal output assertions in `tests/test_checkpoint.py`.
+- All thirteen tests passed. Verified the row counts and column spacing for 5 × 5, 40 × 5, and 5 × 40 grids in both views.
 
 ### 2026-11-18 14:04 MST — Add map size and layout selection
 

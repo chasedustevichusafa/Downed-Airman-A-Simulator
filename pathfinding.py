@@ -23,7 +23,7 @@ def _draw_search(
     marks.update(dict.fromkeys(queued, "o"))
     marks[current] = "@"
     return "\n".join(
-        "".join(
+        " ".join(
             format_tile(marks.get((row, column), tile))
             for column, tile in enumerate(line)
         )
