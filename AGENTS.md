@@ -19,3 +19,7 @@ For Lesson 41, report total path cost as the primary metric and track nodes expa
 ## Commits & Pull Requests
 
 Use short, imperative commit subjects, such as `Add text map parser`. Keep pull requests focused and describe what changed, why, and how it was verified. Link related issues when available. Include sample terminal output for changes to the checkpoint or a screenshot for visible interface changes.
+
+## README Contribution Log
+
+Every contribution must update the **Contribution Log** in the root `README.md` as part of the same change. Add the newest entry first with the local date, time, and time zone. Describe what was done, name the affected files or milestones, and record any checks performed and their results. Include decisions and remaining work when they affect the next contributor. Log documentation, repository setup, and planning changes as well as implementation work.
