@@ -63,6 +63,7 @@ class TerminalTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             result = self.run_demo(directory)
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("Starting map (detour.txt)\nS#..E\n.....\n"))
         self.assertIn("Path (row, column):", result.stdout)
         self.assertIn("Steps: 6", result.stdout)
         self.assertIn("Path cost: 6", result.stdout)
@@ -70,7 +71,22 @@ class TerminalTests(unittest.TestCase):
     def test_unreachable_map_is_a_valid_result(self):
         result = self.run_demo(ROOT, "maps/unreachable.txt")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), "No path to extraction.")
+        self.assertTrue(result.stdout.startswith("Starting map (unreachable.txt)\nS#E\n.#.\n"))
+        self.assertTrue(result.stdout.rstrip().endswith("No path to extraction."))
+
+    def test_trace_shows_search_and_why_goal_is_optimal(self):
+        with TemporaryDirectory() as directory:
+            (Path(directory) / "open.txt").write_text("S.E\n...\n", encoding="utf-8")
+            result = self.run_demo(directory, "--trace", "open.txt")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("Starting map (open.txt)\nS.E\n...\n"))
+        self.assertIn("@.E\n...", result.stdout)
+        self.assertIn("queue g=1, h=3, f=4", result.stdout)
+        self.assertLess(result.stdout.index("queue g=2, h=0, f=2"),
+                        result.stdout.index("Pop (0, 2): g=2, h=0, f=2"))
+        self.assertIn("Lowest remaining frontier f: 4.", result.stdout)
+        self.assertIn("Optimality check: goal h=0", result.stdout)
+        self.assertIn("Steps: 2", result.stdout)
 
     def test_missing_and_invalid_files_return_errors(self):
         with TemporaryDirectory() as directory:

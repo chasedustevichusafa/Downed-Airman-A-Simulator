@@ -17,6 +17,10 @@ def main() -> int:
         "map_file", nargs="?", type=Path, default=DEFAULT_MAP,
         help="text map to solve (default: maps/detour.txt)",
     )
+    parser.add_argument(
+        "--trace", action="store_true",
+        help="show the grid, neighbor checks, and why the search stops",
+    )
     args = parser.parse_args()
 
     try:
@@ -25,7 +29,11 @@ def main() -> int:
         print(f"Could not load {args.map_file}: {error}", file=sys.stderr)
         return 1
 
-    result = find_path(grid)
+    print(f"Starting map ({args.map_file.name})")
+    print("\n".join(grid.rows))
+    print("S start  E extraction  # wall  . open\n", flush=True)
+
+    result = find_path(grid, trace=print if args.trace else None)
     if result is None:
         print("No path to extraction.")
         return 0

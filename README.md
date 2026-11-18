@@ -13,10 +13,11 @@ The Lesson 36 terminal checkpoint is implemented. It uses Python 3.7 or later an
 
 ## Run the Lesson 36 demo
 
-Run these commands from the repository root. The first command loads the bundled detour map without prompting.
+Run these commands from the repository root. The first command loads the bundled detour map without prompting. Each demo prints the original map and its legend before the search begins.
 
 ```sh
 python3 main.py
+python3 main.py --trace
 python3 main.py maps/direct.txt
 python3 main.py maps/unreachable.txt
 python3 -m unittest discover -s tests -v
@@ -32,13 +33,34 @@ Maps are rectangular UTF-8 text grids. Use exactly one `S` for the start and one
 
 ## How A* works
 
-1. **Score routes.** For each tile, `g` is the cost of the best route discovered from the start, and `h` is its Manhattan distance to the goal. A min-heap picks the route with the lowest `f = g + h`. Manhattan distance counts how many horizontal and vertical moves are needed on an open grid, so walls can only make the true route cost higher.
+Run `python3 main.py --trace` to follow the search on the detour map. Each snapshot shows the tile just removed from the queue (`@`), the tiles waiting in the frontier (`o`), and the tiles already expanded (`x`). Below the grid, A* explains which neighbors it queues, skips, or rejects. At the goal, it reports the lowest remaining frontier score if one exists and explains why a cheaper route is impossible. Try `python3 main.py --trace maps/unreachable.txt` to see how the search ends when the frontier runs out.
+
+1. **Score routes.** For each tile, `g` is the cost of the best route discovered from the start, and `h` is the number of horizontal and vertical moves to the goal on an open grid. A min-heap picks the route with the lowest `f = g + h`. Walls can only add moves, so `h` is a lower bound.
 2. **Expand a tile.** Pop the next route from the heap. Skip its entry if a cheaper route to the same tile is already recorded. Check the four neighboring tiles and discard walls and out-of-bounds tiles. For each cheaper route discovered, record its new cost and predecessor, then queue it.
 3. **Finish and reconstruct.** When the goal is popped, its heuristic is zero, so its priority equals its actual cost. If a cheaper route existed, some tile on that route would still have a lower estimated total cost and would be popped first. Follow predecessors from the goal back to the start and reverse the list. If the heap empties first, the goal is unreachable.
 
 On the detour map, the start at `(0, 0)` has `g = 0` and `h = 4`. The wall blocks the direct move to the right. Moving down to `(1, 0)` gives `g = 1` and `h = 5`. A* finds a route around the wall in six moves. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-18 13:49 MST — Align the checkpoint docs with the terminal demo
+
+- Updated `AGENTS.md`, `PROJECT_PLAN.md`, and the README command list to cover the starting grid and `--trace` walkthrough. The demo steps now show how to explain both optimality and an exhausted frontier.
+- Reran all eight tests and checked the traced detour and unreachable runs before committing the terminal UI changes.
+
+### 2026-11-18 13:49 MST — Use h in the A* explanation
+
+- Updated the helper name and trace in `pathfinding.py` and the explanations in `README.md` and `PROJECT_PLAN.md` to use `h` for the estimated moves remaining. Verified the traced demo and all eight tests.
+
+### 2026-11-18 13:47 MST — Show the starting map
+
+- Updated `main.py` to display the loaded map and its tile legend before A* starts, in both the standard output and trace modes.
+- Updated the terminal tests to check that the unmarked map appears first for the default, unreachable, and traced runs. All eight tests passed.
+
+### 2026-11-18 13:46 MST — Show A* exploration in the terminal
+
+- Added `--trace` in `main.py` and connected it to the search in `pathfinding.py`. The trace shows grid snapshots, scores, neighbor decisions, and the reason A* can stop at the goal or report no route.
+- Added a terminal regression test for the case where A* proves the result optimal while other tiles are still queued. All eight tests passed, and both the detour and unreachable traces were checked manually.
 
 ### 2026-11-18 13:39 MST — Implement the Python terminal checkpoint
 
