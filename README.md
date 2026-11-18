@@ -33,15 +33,32 @@ Maps are rectangular UTF-8 text grids. Use exactly one `S` for the start and one
 
 ## How A* works
 
-Run `python3 main.py --trace` to follow the search on the detour map. Each snapshot shows the tile just removed from the queue (`@`), the tiles waiting in the frontier (`o`), and the tiles already expanded (`x`). Below the grid, A* explains which neighbors it queues, skips, or rejects. At the goal, it reports the lowest remaining frontier score if one exists and explains why a cheaper route is impossible. Try `python3 main.py --trace maps/unreachable.txt` to see how the search ends when the frontier runs out.
+Run `python3 main.py --trace` to follow the search on the detour map. Each snapshot shows the tile just removed from the queue (`@`), the tiles waiting in the frontier (`o`), and the tiles already expanded (`x`). Below the grid, A* explains its decisions for each walkable neighbor. At the goal, it reports the lowest remaining frontier score if one exists and explains why a cheaper route is impossible. Try `python3 main.py --trace maps/unreachable.txt` to see how the search ends when the frontier runs out.
 
-1. **Score routes.** For each tile, `g` is the cost of the best route discovered from the start, and `h` is the number of horizontal and vertical moves to the goal on an open grid. A min-heap picks the route with the lowest `f = g + h`. Walls can only add moves, so `h` is a lower bound.
-2. **Expand a tile.** Pop the next route from the heap. Skip its entry if a cheaper route to the same tile is already recorded. Check the four neighboring tiles and discard walls and out-of-bounds tiles. For each cheaper route discovered, record its new cost and predecessor, then queue it.
-3. **Finish and reconstruct.** When the goal is popped, its heuristic is zero, so its priority equals its actual cost. If a cheaper route existed, some tile on that route would still have a lower estimated total cost and would be popped first. Follow predecessors from the goal back to the start and reverse the list. If the heap empties first, the goal is unreachable.
+The terminal colors the start green, the goal magenta, and walls red. During the search, the selected tile is yellow, queued tiles are cyan, and checked tiles are blue. Open tiles use the terminal’s default text color. Redirected output uses plain text by default. Use `--color never` to turn colors off or `--color always` to force them.
 
-On the detour map, the start at `(0, 0)` has `g = 0` and `h = 4`. The wall blocks the direct move to the right. Moving down to `(1, 0)` gives `g = 1` and `h = 5`. A* finds a route around the wall in six moves. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
+1. **Score routes.** Moves so far counts the moves in the best route found to a tile. Estimated moves remaining counts the horizontal and vertical moves needed to reach the goal on an open grid. Estimated total moves adds the two values. Walls can only add moves, so the estimate never exceeds the moves actually needed.
+2. **Check neighbors.** Select the tile with the lowest estimated total moves from the frontier, the queue of tiles waiting to be checked. The map supplies only legal one-step destinations. When a route improves the number of moves needed to reach a neighbor, remember the previous tile and add the neighbor to the queue.
+3. **Confirm the shortest path.** Once the goal is selected, the remaining estimate is zero. Any shorter route would still have a tile in the queue with a lower estimate. Follow the remembered tiles from the goal back to the start, then reverse their order. If the queue empties before the goal is selected, there is no path.
+
+On the detour map, the start at `(0, 0)` has zero moves so far and four estimated moves remaining. A wall blocks the move to the right. Going down to `(1, 0)` gives one move so far plus five estimated moves remaining, for an estimated total of six. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-18 14:00 MST — Trace only legal moves
+
+- Added walkable neighbor generation to `map_loader.py` and updated `pathfinding.py` to score and display only those destinations. The map still shows walls as part of the grid.
+- All ten tests passed. The trace test confirms that the first detour step lists the single legal move and omits the wall and off-grid coordinates.
+
+### 2026-11-18 13:56 MST — Color the terminal map
+
+- Added distinct colors to the starting map, search snapshots, and their legends in `main.py` and `pathfinding.py`. The map symbols remain visible in plain text. Added a color option for forcing or disabling terminal colors.
+- All nine tests passed. The new terminal test verifies six distinct tile styles, plain redirected output, and identical trace text with or without color.
+
+### 2026-11-18 13:55 MST — Spell out search terms in the terminal
+
+- Replaced the one-letter score names with full labels in `pathfinding.py`, the README walkthrough, and `PROJECT_PLAN.md`. The trace defines the three scores, the queue, and the search markers before showing any decisions. The starting map explains its coordinates and symbols.
+- Updated `AGENTS.md` to keep terminal wording and teaching comments explicit. Updated the terminal test to check the new wording and verified all eight tests.
 
 ### 2026-11-18 13:49 MST — Align the checkpoint docs with the terminal demo
 

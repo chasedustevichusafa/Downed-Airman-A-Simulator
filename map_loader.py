@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple
+from typing import Iterator, Tuple
 
 
 Position = Tuple[int, int]
@@ -24,6 +24,22 @@ class GridMap:
             and 0 <= column < len(self.rows[0])
             and self.rows[row][column] != "#"
         )
+
+    def walkable_neighbors(self, position: Position) -> Iterator[Position]:
+        """Yield legal one-step destinations from a tile on the map."""
+        row, column = position
+        # Add a direction only when the map has a tile in that direction.
+        neighbors = []
+        if row > 0:
+            neighbors.append((row - 1, column))
+        if row + 1 < len(self.rows):
+            neighbors.append((row + 1, column))
+        if column > 0:
+            neighbors.append((row, column - 1))
+        if column + 1 < len(self.rows[row]):
+            neighbors.append((row, column + 1))
+
+        yield from filter(self.is_walkable, neighbors)
 
 
 def parse_map(text: str) -> GridMap:

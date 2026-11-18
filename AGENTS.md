@@ -10,6 +10,8 @@ The repository currently contains the worksheet and this guide. As implementatio
 
 The Lesson 36 checkpoint runs from a terminal, displays a predefined text map without prompting, and prints the path and step count. Use `python3 main.py --trace` to demonstrate exploration and explain why A* stops. Keep the exact run and test commands in the README current.
 
+Use descriptive names in code and spell out search terms in terminal output, comments, and walkthroughs. Introduce each map symbol and score before using it in the demo.
+
 ## Testing & Evaluation
 
 Use small maps with known answers to verify path cost, blocked cells, and unreachable goals. Record the expected path cost and step count for each fixture. When dynamic patrols are added, use fixed scenarios or seeds so contributors can reproduce failures.

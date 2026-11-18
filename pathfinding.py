@@ -6,51 +6,69 @@ from typing import Callable, List, Optional, Set, Tuple
 from map_loader import GridMap, Position
 
 
-ORTHOGONAL_MOVES = ((-1, 0), (1, 0), (0, -1), (0, 1))
-
-
-def h(position: Position, goal: Position) -> int:
+def estimate_remaining_moves(position: Position, goal: Position) -> int:
     """Return the minimum moves required if all tiles were open."""
     return abs(position[0] - goal[0]) + abs(position[1] - goal[1])
 
 
 def _draw_search(
-    grid: GridMap, current: Position, queued: Set[Position], expanded: Set[Position]
+    grid: GridMap,
+    current: Position,
+    queued: Set[Position],
+    expanded: Set[Position],
+    format_tile: Callable[[str], str],
 ) -> str:
     """Draw a snapshot just after the current tile leaves the frontier."""
     marks = dict.fromkeys(expanded, "x")
     marks.update(dict.fromkeys(queued, "o"))
     marks[current] = "@"
     return "\n".join(
-        "".join(marks.get((row, column), tile) for column, tile in enumerate(line))
+        "".join(
+            format_tile(marks.get((row, column), tile))
+            for column, tile in enumerate(line)
+        )
         for row, line in enumerate(grid.rows)
     )
 
 
 def find_path(
-    grid: GridMap, *, trace: Optional[Callable[[str], None]] = None
+    grid: GridMap,
+    *,
+    trace: Optional[Callable[[str], None]] = None,
+    format_tile: Callable[[str], str] = str,
 ) -> Optional[Tuple[List[Position], int]]:
     """Return the optimal path (including both endpoints) and its cost, or None.
 
-    The priority of a queued route is f = g + h. The value g is the number
-    of moves already made and h is the number of moves remaining on an open grid.
-    Each move changes one coordinate by one and costs one. Thus h can never
-    overestimate the remaining cost. Walls can force extra moves.
+    Moves so far is the length of the best route found to a tile.
+    Estimated moves remaining counts the row and column differences to the
+    goal. Each move changes one coordinate by one, and walls can only add
+    moves, so the estimate never exceeds the actual moves still needed.
+    Estimated total moves adds those two values to rank routes in the queue.
 
-    Pass a trace callback to display the actual decisions made by this search.
+    Pass a trace callback to receive each message describing the search.
+    The tile formatter controls how the trace displays each map symbol.
     """
     start, goal = grid.start, grid.goal
 
-    # 1. Initialize the frontier with the start. Heap entries are (f, g, tile).
-    #    The start has g = 0 because we have yet to make a move. The heap
-    #    breaks equal-f ties using g and then the tile coordinates.
-    frontier = [(h(start, goal), 0, start)]
+    # 1. Put the start in the frontier, the queue of tiles awaiting a check.
+    #    Each entry stores estimated total moves, moves so far, and the tile.
+    #    The start takes zero moves. When total estimates tie, the queue
+    #    orders entries by fewer moves so far, then by row and column.
+    frontier = [(estimate_remaining_moves(start, goal), 0, start)]
     best_cost = {start: 0}
     predecessor = {}
     expanded = set()
     if trace is not None:
-        trace("A* picks the lowest f = g + h. The value h counts moves to the goal on an open grid.")
-        trace("Map: @ current, o queued, x expanded, S start, E goal, # wall.")
+        trace("Moves so far: moves in the recorded route from the start to this tile.")
+        trace("Estimated moves remaining: add how many rows and columns separate the tile from the goal.")
+        trace("Estimated total moves: moves so far plus estimated moves remaining.")
+        trace("A* selects the tile with the lowest estimated total moves.")
+        trace("The frontier is the queue of tiles waiting to be checked.")
+        trace(
+            f"Search markers: {format_tile('@')} selected tile, "
+            f"{format_tile('o')} waiting in the queue, "
+            f"{format_tile('x')} neighbors already checked."
+        )
 
     while frontier:
         # 2. Take the route with the smallest estimated total cost. A cheaper
@@ -60,7 +78,10 @@ def find_path(
         current_priority, current_cost, current = heappop(frontier)
         if current_cost != best_cost[current]:
             if trace is not None:
-                trace(f"Skip stale entry {current}: g={current_cost}, best g={best_cost[current]}.")
+                trace(
+                    f"Skip outdated entry for {current}: this route takes {current_cost} moves. "
+                    f"A route with {best_cost[current]} moves is already recorded."
+                )
             continue
 
         if trace is not None:
@@ -71,26 +92,29 @@ def find_path(
                 if cost == best_cost[tile]
             }
             trace(
-                f"\nPop {current}: g={current_cost}, h={current_priority - current_cost}, "
-                f"f={current_priority} (lowest queued f)"
+                f"\nSelect {current} from the queue (lowest estimated total moves).\n"
+                f"  Moves so far: {current_cost}\n"
+                f"  Estimated moves remaining: {current_priority - current_cost}\n"
+                f"  Estimated total moves: {current_priority}"
             )
-            trace(_draw_search(grid, current, set(pending), expanded))
+            trace(_draw_search(grid, current, set(pending), expanded, format_tile))
 
-        # 3. Stop when the goal is popped. At the goal h = 0, so its priority
-        #    equals its actual cost. Any cheaper unfinished route would have
-        #    had a smaller f somewhere on the frontier and been considered
-        #    first. Follow the recorded predecessors back to the start.
+        # 3. Stop when the goal is removed from the queue. The goal has zero
+        #    moves remaining, so its estimate is its actual route length.
+        #    A shorter route would still have a tile with a lower estimate
+        #    in the queue. Follow the recorded previous tiles to the start.
         if current == goal:
             if trace is not None:
                 remaining_bound = min(pending.values(), default=None)
                 if remaining_bound is None:
                     trace("Frontier is empty after removing the goal.")
                 else:
-                    trace(f"Lowest remaining frontier f: {remaining_bound}.")
+                    trace(f"Lowest estimated total among remaining routes: {remaining_bound} moves.")
                 trace(
-                    f"Optimality check: goal h=0, so its f equals its cost ({current_cost}). "
-                    "Any cheaper route would still have a frontier tile with a lower f "
-                    "because h is a lower bound."
+                    f"Shortest-path check: the goal has zero moves remaining, so its "
+                    f"estimated total is its actual route length of {current_cost} moves. "
+                    "The remaining-moves estimate ignores walls and never overestimates. "
+                    "A shorter route would still have a tile with a lower estimate in the queue."
                 )
             path = [goal]
             while path[-1] != start:
@@ -98,33 +122,33 @@ def find_path(
             path.reverse()
             return path, current_cost
 
-        # 4. Expand the four legal directions. Record and queue a neighbor
+        # 4. Consider only destinations the map allows. Record and queue a neighbor
         #    only when this route improves its best known cost. Update the
         #    predecessor at the same time so reconstruction follows that route.
         if trace is not None:
             expanded.add(current)
-        row, column = current
-        for row_delta, column_delta in ORTHOGONAL_MOVES:
-            neighbor = (row + row_delta, column + column_delta)
-            if not grid.is_walkable(neighbor):
-                if trace is not None:
-                    trace(f"  {neighbor}: blocked or outside the grid")
-                continue
-
+        for neighbor in grid.walkable_neighbors(current):
             candidate_cost = current_cost + 1
             previous_cost = best_cost.get(neighbor)
             if previous_cost is not None and candidate_cost >= previous_cost:
                 if trace is not None:
-                    trace(f"  {neighbor}: skip g={candidate_cost}; already have g={previous_cost}")
+                    trace(
+                        f"  {neighbor}: skip route with {candidate_cost} moves. "
+                        f"Already recorded {previous_cost} moves."
+                    )
                 continue
 
             best_cost[neighbor] = candidate_cost
             predecessor[neighbor] = current
-            estimate = h(neighbor, goal)
-            priority = candidate_cost + estimate
+            remaining_moves = estimate_remaining_moves(neighbor, goal)
+            priority = candidate_cost + remaining_moves
             heappush(frontier, (priority, candidate_cost, neighbor))
             if trace is not None:
-                trace(f"  {neighbor}: queue g={candidate_cost}, h={estimate}, f={priority}")
+                trace(
+                    f"  {neighbor}: add to queue (moves so far: {candidate_cost}, "
+                    f"estimated moves remaining: {remaining_moves}, "
+                    f"estimated total moves: {priority})."
+                )
 
     # 5. The frontier is empty. Every reachable tile has been considered,
     #    so the goal cannot be reached on this grid.
