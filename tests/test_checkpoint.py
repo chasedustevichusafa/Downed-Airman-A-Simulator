@@ -1,12 +1,16 @@
 """Verify parsing, path optimality, and the terminal checkpoint entry point."""
 
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 import re
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
+import main as terminal_demo
 from map_choices import preset_grids, random_grid
 from map_loader import load_map, parse_map
 from pathfinding import find_path
@@ -109,15 +113,30 @@ class TerminalTests(unittest.TestCase):
         self.assertIn("Steps: 6", result.stdout)
 
     def test_dead_end_maze_traces_tiles_outside_the_final_route(self):
-        result = self.run_demo(ROOT, "--choose-map", answers="9\n13\n7\n")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Starting map (Dead-end maze)", result.stdout)
-        final_path = next(line for line in result.stdout.splitlines() if line.startswith("Path ("))
+        output = StringIO()
+        paused_after = []
+
+        def record_pause(seconds):
+            self.assertEqual(seconds, 1)
+            paused_after.append(output.getvalue().splitlines()[-1])
+
+        with patch.object(sys, "argv", ["main.py", "--choose-map"]), \
+             patch("builtins.input", side_effect=["9", "13", "7"]), \
+             patch.object(terminal_demo, "sleep", side_effect=record_pause), \
+             redirect_stdout(output):
+            self.assertEqual(terminal_demo.main(), 0)
+
+        trace = output.getvalue()
+        self.assertIn("Starting map (Dead-end maze)", trace)
+        final_path = next(line for line in trace.splitlines() if line.startswith("Path ("))
         for dead_end in ("(0, 10)", "(2, 10)", "(4, 10)", "(6, 10)"):
             with self.subTest(dead_end=dead_end):
-                self.assertIn(f"Select {dead_end} from the queue", result.stdout)
+                self.assertIn(f"Select {dead_end} from the queue", trace)
                 self.assertNotIn(dead_end, final_path)
-        self.assertIn("Steps: 28", result.stdout)
+        self.assertIn("Steps: 28", trace)
+        self.assertEqual(len(paused_after), trace.count("\nSelect "))
+        self.assertIn("add to queue", paused_after[0])
+        self.assertTrue(paused_after[-1].startswith("Shortest-path check:"))
 
     def test_unreachable_map_is_a_valid_result(self):
         result = self.run_demo(ROOT, "maps/unreachable.txt")

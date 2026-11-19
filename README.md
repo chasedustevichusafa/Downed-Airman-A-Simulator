@@ -23,7 +23,7 @@ Run `python3 main.py` from the repository root in a terminal. Enter the number o
 6. New random grid
 7. Dead-end maze
 
-Choice 7 turns on the search trace automatically. Try 9 rows and 13 columns to see A* investigate four branches that end near the goal. The shortest route goes around them along the bottom edge and takes 28 moves.
+Choice 7 turns on the search trace automatically and pauses for one second after each displayed search iteration. Try 5 rows and 5 columns for a shorter demo, or 9 rows and 13 columns to see A* investigate four branches that end near the goal. On the larger example, the shortest route goes around the branches along the bottom edge and takes 28 moves.
 
 Choice 6 guarantees a walkable route and records the layout in the local `.random-map-history.sqlite3` file. It avoids the five presets and every random layout recorded for that size. Keep the history file to preserve that guarantee across runs. If the available layouts ever run out, the script asks you to choose another size. Git ignores the history file.
 
@@ -59,6 +59,11 @@ The terminal leaves one space between tiles so equal row and column counts look 
 On the detour map, the start at `(0, 0)` has zero moves so far and four estimated moves remaining. A wall blocks the move to the right. Going down to `(1, 0)` gives one move so far plus five estimated moves remaining, for an estimated total of six. Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-18 14:16 MST — Pace each dead-end maze iteration
+
+- Updated `main.py` and `pathfinding.py` so option 7 prints each search iteration and waits one second before continuing. The final path prints immediately after the goal iteration’s pause.
+- All fourteen tests passed. The maze test confirms one one-second pause per displayed iteration and checks that pauses occur after the iteration details are printed.
 
 ### 2026-11-18 14:13 MST — Add a dead-end maze for the search demo
 

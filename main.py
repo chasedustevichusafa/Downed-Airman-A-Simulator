@@ -5,6 +5,7 @@ from os import environ
 from pathlib import Path
 from sqlite3 import Error as MapHistoryError
 import sys
+from time import sleep
 from typing import Tuple
 
 from map_choices import (
@@ -52,7 +53,7 @@ def read_number(prompt: str, minimum: int, maximum: int) -> int:
 
 
 def choose_map(history_file: Path) -> Tuple[GridMap, str, bool]:
-    """Return the chosen map, its display name, and whether to trace by default."""
+    """Return the chosen map, its display name, and whether it is the dead-end demo."""
     height = read_number("Number of rows", MINIMUM_SIZE, MAXIMUM_SIZE)
     width = read_number("Number of columns", MINIMUM_SIZE, MAXIMUM_SIZE)
     presets = preset_grids(height, width)
@@ -68,6 +69,12 @@ def choose_map(history_file: Path) -> Tuple[GridMap, str, bool]:
     if choice == DEAD_END_OPTION:
         return dead_end_grid(height, width), DEAD_END_NAME, True
     return presets[choice - 1], PRESET_NAMES[choice - 1], False
+
+
+def pause_after_search_iteration() -> None:
+    """Display the completed search step before waiting one second."""
+    sys.stdout.flush()
+    sleep(1)
 
 
 def main() -> int:
@@ -93,11 +100,10 @@ def main() -> int:
     if options.map_file is not None and options.choose_map:
         parser.error("Choose either a map file or --choose-map.")
 
-    trace_search = options.trace
+    dead_end_demo = False
     try:
         if options.choose_map or (options.map_file is None and sys.stdin.isatty()):
-            grid, map_name, trace_by_default = choose_map(RANDOM_MAP_HISTORY)
-            trace_search = trace_search or trace_by_default
+            grid, map_name, dead_end_demo = choose_map(RANDOM_MAP_HISTORY)
         else:
             map_file = options.map_file or DEFAULT_MAP
             grid = load_map(map_file)
@@ -131,7 +137,12 @@ def main() -> int:
     )
     print("Coordinates use (row, column), with (0, 0) at the upper left.\n", flush=True)
 
-    result = find_path(grid, trace=print if trace_search else None, format_tile=format_tile)
+    result = find_path(
+        grid,
+        trace=print if options.trace or dead_end_demo else None,
+        format_tile=format_tile,
+        after_iteration=pause_after_search_iteration if dead_end_demo else None,
+    )
     if result is None:
         print("No path to extraction.")
         return 0

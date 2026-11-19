@@ -36,6 +36,7 @@ def find_path(
     *,
     trace: Optional[Callable[[str], None]] = None,
     format_tile: Callable[[str], str] = str,
+    after_iteration: Optional[Callable[[], None]] = None,
 ) -> Optional[Tuple[List[Position], int]]:
     """Return the optimal path (including both endpoints) and its cost, or None.
 
@@ -47,6 +48,8 @@ def find_path(
 
     Pass a trace callback to receive each message describing the search.
     The tile formatter controls how the trace displays each map symbol.
+    The after-iteration callback runs after each selected tile is handled,
+    including the goal, once its trace messages have been written.
     """
     start, goal = grid.start, grid.goal
 
@@ -120,6 +123,8 @@ def find_path(
             while path[-1] != start:
                 path.append(predecessor[path[-1]])
             path.reverse()
+            if after_iteration is not None:
+                after_iteration()
             return path, current_cost
 
         # 4. Consider only destinations the map allows. Record and queue a neighbor
@@ -149,6 +154,8 @@ def find_path(
                     f"estimated moves remaining: {remaining_moves}, "
                     f"estimated total moves: {priority})."
                 )
+        if after_iteration is not None:
+            after_iteration()
 
     # 5. The frontier is empty. Every reachable tile has been considered,
     #    so the goal cannot be reached on this grid.
