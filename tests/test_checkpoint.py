@@ -84,7 +84,8 @@ class MapChoiceTests(unittest.TestCase):
 
 
 class TerminalTests(unittest.TestCase):
-    def run_demo(self, directory, *args, answers=None):
+    def run_demo(self, directory, *args, answers=""):
+        # Always pipe input so the child cannot wait at the interactive menu.
         return subprocess.run(
             [sys.executable, str(ROOT / "main.py"), *args],
             cwd=directory,

@@ -60,6 +60,10 @@ On the detour map, the start at `(0, 0)` has zero moves so far and four estimate
 
 ## Contribution Log
 
+### 2026-11-19 09:41 MST — Prevent the checkpoint tests from waiting for menu input
+
+- Updated the terminal test helper in `tests/test_checkpoint.py` to pipe empty input by default and use scripted answers for menu tests. All fourteen tests passed with both redirected input and interactive terminal input.
+
 ### 2026-11-18 14:16 MST — Pace each dead-end maze iteration
 
 - Updated `main.py` and `pathfinding.py` so option 7 prints each search iteration and waits one second before continuing. The final path prints immediately after the goal iteration’s pause.
