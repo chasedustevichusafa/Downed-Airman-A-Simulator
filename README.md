@@ -54,6 +54,7 @@ The Lesson 36 terminal checkpoint is implemented. Dynamic simulation and the Les
 - [Milestone plan and exit criteria](PROJECT_PLAN.md)
 - [Lesson 36 checkpoint build plan](PROJECT_PLAN.md#lesson-36--terminal-checkpoint)
 - [Contributor guidelines](AGENTS.md)
+- [Desktop app implementation plan](GUI_PLAN.md)
 
 ## Try the interactive map menu
 
@@ -88,6 +89,11 @@ The terminal leaves one space between tiles so equal row and column counts look 
 Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-20 12:53 MST — Plan the cross-platform desktop app
+
+- Created the `codex/astar-desktop-app` branch and wrote `GUI_PLAN.md`. The plan covers shared A* iterations, map selection, playback controls, Windows, macOS, and Linux testing, and the conditions for merging into `main`.
+- Verified the README plan link and ran the existing checkpoint suite. Desktop implementation and platform testing are future work on the feature branch.
 
 ### 2026-11-19 09:44 MST — Put the checkpoint testing procedure first
 
