@@ -89,6 +89,10 @@ Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each ste
 
 ## Contribution Log
 
+### 2026-11-22 22:36 MST — Add the Lesson 36 checkpoint paragraph
+
+- Added the team's original wording in `checkpoint paragraph.md`. Verified that the file matches the restored paragraph on the desktop branch.
+
 ### 2026-11-19 09:44 MST — Put the checkpoint testing procedure first
 
 - Added a first-run checklist to `README.md` with setup requirements, fixed-map commands, expected results, and a walkthrough of the detour trace. Moved interactive map selection below the checkpoint procedure.
