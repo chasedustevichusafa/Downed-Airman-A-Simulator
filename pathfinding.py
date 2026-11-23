@@ -1,9 +1,29 @@
 """A* shortest-path search on a static, four-direction grid."""
 
+from dataclasses import dataclass
 from heapq import heappop, heappush
-from typing import Callable, List, Optional, Set, Tuple
+from typing import Callable, Iterator, List, Optional, Set, Tuple, Union
 
 from map_loader import GridMap, Position
+
+
+@dataclass(frozen=True)
+class SearchIteration:
+    """One selected tile and the changes the search made to the queue."""
+
+    selected: Position
+    moves_so_far: int
+    estimated_moves_remaining: int
+    newly_queued: Tuple[Position, ...]
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    """The final route, or no route, and the number of tiles expanded."""
+
+    path: Optional[Tuple[Position, ...]]
+    cost: Optional[int]
+    tiles_expanded: int
 
 
 def estimate_remaining_moves(position: Position, goal: Position) -> int:
@@ -31,25 +51,23 @@ def _draw_search(
     )
 
 
-def find_path(
+def search_steps(
     grid: GridMap,
     *,
+    estimate: Callable[[Position, Position], int] = estimate_remaining_moves,
     trace: Optional[Callable[[str], None]] = None,
     format_tile: Callable[[str], str] = str,
-    after_iteration: Optional[Callable[[], None]] = None,
-) -> Optional[Tuple[List[Position], int]]:
-    """Return the optimal path (including both endpoints) and its cost, or None.
+) -> Iterator[Union[SearchIteration, SearchResult]]:
+    """Yield selected tiles followed by one final shortest-path result.
 
     Moves so far is the length of the best route found to a tile.
-    Estimated moves remaining counts the row and column differences to the
-    goal. Each move changes one coordinate by one, and walls can only add
-    moves, so the estimate never exceeds the actual moves still needed.
+    A* estimates remaining moves from the open-grid distance. Each move
+    changes one coordinate by one, and walls can only add moves, so this
+    estimate never exceeds the actual moves still needed. Setting the
+    estimate to zero ranks tiles by moves so far, as in Dijkstra's algorithm.
     Estimated total moves adds those two values to rank routes in the queue.
 
-    Pass a trace callback to receive each message describing the search.
-    The tile formatter controls how the trace displays each map symbol.
-    The after-iteration callback runs after each selected tile is handled,
-    including the goal, once its trace messages have been written.
+    The optional terminal trace formats decisions made by this same search.
     """
     start, goal = grid.start, grid.goal
 
@@ -57,10 +75,11 @@ def find_path(
     #    Each entry stores estimated total moves, moves so far, and the tile.
     #    The start takes zero moves. When total estimates tie, the queue
     #    orders entries by fewer moves so far, then by row and column.
-    frontier = [(estimate_remaining_moves(start, goal), 0, start)]
+    frontier = [(estimate(start, goal), 0, start)]
     best_cost = {start: 0}
     predecessor = {}
     expanded = set()
+    tiles_expanded = 0
     if trace is not None:
         trace("Moves so far: moves in the recorded route from the start to this tile.")
         trace("Estimated moves remaining: add how many rows and columns separate the tile from the goal.")
@@ -123,15 +142,18 @@ def find_path(
             while path[-1] != start:
                 path.append(predecessor[path[-1]])
             path.reverse()
-            if after_iteration is not None:
-                after_iteration()
-            return path, current_cost
+            yield SearchIteration(current, current_cost, 0, ())
+            yield SearchResult(tuple(path), current_cost, tiles_expanded)
+            return
 
         # 4. Consider only destinations the map allows. Record and queue a neighbor
         #    only when this route improves its best known cost. Update the
         #    predecessor at the same time so reconstruction follows that route.
         if trace is not None:
             expanded.add(current)
+        # Count only tiles whose neighbors are actually examined.
+        tiles_expanded += 1
+        newly_queued = []
         for neighbor in grid.walkable_neighbors(current):
             candidate_cost = current_cost + 1
             previous_cost = best_cost.get(neighbor)
@@ -145,20 +167,48 @@ def find_path(
 
             best_cost[neighbor] = candidate_cost
             predecessor[neighbor] = current
-            remaining_moves = estimate_remaining_moves(neighbor, goal)
+            remaining_moves = estimate(neighbor, goal)
             priority = candidate_cost + remaining_moves
             heappush(frontier, (priority, candidate_cost, neighbor))
+            newly_queued.append(neighbor)
             if trace is not None:
                 trace(
                     f"  {neighbor}: add to queue (moves so far: {candidate_cost}, "
                     f"estimated moves remaining: {remaining_moves}, "
                     f"estimated total moves: {priority})."
                 )
-        if after_iteration is not None:
-            after_iteration()
+        yield SearchIteration(
+            current, current_cost, current_priority - current_cost, tuple(newly_queued)
+        )
 
     # 5. The frontier is empty. Every reachable tile has been considered,
     #    so the goal cannot be reached on this grid.
     if trace is not None:
         trace("\nFrontier exhausted before reaching the goal.")
+    yield SearchResult(None, None, tiles_expanded)
+
+
+def dijkstra_result(grid: GridMap) -> SearchResult:
+    """Get the static comparison result using the same queue and move costs."""
+    for event in search_steps(grid, estimate=lambda position, goal: 0):
+        if isinstance(event, SearchResult):
+            return event
+    raise RuntimeError("The search ended without reporting a result.")
+
+
+def find_path(
+    grid: GridMap,
+    *,
+    trace: Optional[Callable[[str], None]] = None,
+    format_tile: Callable[[str], str] = str,
+    after_iteration: Optional[Callable[[], None]] = None,
+) -> Optional[Tuple[List[Position], int]]:
+    """Return the route and cost for the existing terminal interface."""
+    for event in search_steps(grid, trace=trace, format_tile=format_tile):
+        if isinstance(event, SearchResult):
+            if event.path is None or event.cost is None:
+                return None
+            return list(event.path), event.cost
+        if after_iteration is not None:
+            after_iteration()
     return None

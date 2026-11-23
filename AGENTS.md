@@ -12,6 +12,10 @@ Run `python3 main.py` in a terminal to choose the grid size and layout. Use `pyt
 
 Use descriptive names in code and spell out search terms in terminal output, comments, and walkthroughs. Introduce each map symbol and score before using it in the demo.
 
+## Desktop Final Routes
+
+Preserve the separate **Final routes** view in future desktop iterations. After a static search, draw the A* and Dijkstra routes side by side on clean copies of the same grid. Keep the start and goal visible. Show each algorithm’s path cost and tiles expanded, using the same movement rules and costs for both searches. Use an explicit no-route message when the goal is unreachable. Verify that the bundled open comparison map returns cost 8 for both searches and shows 8 tiles expanded by A* and 30 by Dijkstra.
+
 ## Testing & Evaluation
 
 Use small maps with known answers to verify path cost, blocked cells, and unreachable goals. Record the expected path cost and step count for each fixture. When dynamic patrols are added, use fixed scenarios or seeds so contributors can reproduce failures.

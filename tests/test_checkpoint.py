@@ -13,7 +13,7 @@ from unittest.mock import patch
 import main as terminal_demo
 from map_choices import preset_grids, random_grid
 from map_loader import load_map, parse_map
-from pathfinding import find_path
+from pathfinding import SearchResult, dijkstra_result, find_path, search_steps
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,6 +39,27 @@ class MapTests(unittest.TestCase):
 
 
 class SearchTests(unittest.TestCase):
+    def test_static_comparison_agrees_on_cost_and_counts_search_effort(self):
+        cases = (("direct.txt", 4), ("detour.txt", 6), ("unreachable.txt", None),
+                 ("comparison.txt", 8))
+        for filename, expected_cost in cases:
+            with self.subTest(filename=filename):
+                grid = load_map(MAPS / filename)
+                astar = next(event for event in search_steps(grid) if isinstance(event, SearchResult))
+                dijkstra = dijkstra_result(grid)
+                self.assertEqual(astar.cost, expected_cost)
+                self.assertEqual(dijkstra.cost, expected_cost)
+                for result in (astar, dijkstra):
+                    if expected_cost is None:
+                        self.assertIsNone(result.path)
+                    else:
+                        self.assertEqual(result.path[0], grid.start)
+                        self.assertEqual(result.path[-1], grid.goal)
+                        self.assertEqual(len(result.path) - 1, expected_cost)
+                if filename == "comparison.txt":
+                    self.assertEqual(astar.tiles_expanded, 8)
+                    self.assertGreater(dijkstra.tiles_expanded, astar.tiles_expanded)
+
     def test_reachable_maps_have_valid_optimal_paths(self):
         for filename, expected_steps in (("direct.txt", 4), ("detour.txt", 6)):
             with self.subTest(filename=filename):

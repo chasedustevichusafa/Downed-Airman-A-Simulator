@@ -44,7 +44,7 @@ python3 main.py --trace maps/unreachable.txt
 python3 -m unittest discover -s tests -v
 ```
 
-The suite should report **14 tests** and finish with `OK`. It checks map validation, expected path costs, unreachable goals, the terminal menu, and trace behavior.
+The suite should report **15 tests** and finish with `OK`. It checks map validation, expected path costs, unreachable goals, the terminal menu, and trace behavior.
 
 ## Project Status
 
@@ -55,6 +55,16 @@ The Lesson 36 terminal checkpoint is implemented. Dynamic simulation and the Les
 - [Lesson 36 checkpoint build plan](PROJECT_PLAN.md#lesson-36--terminal-checkpoint)
 - [Contributor guidelines](AGENTS.md)
 - [Desktop app implementation plan](GUI_PLAN.md)
+
+## Desktop route comparison
+
+On the desktop feature branch, run `python3 gui.py` from the repository folder. The desktop app uses Tkinter. Run `python3 -m tkinter` to check that your Python installation can open a window.
+
+1. Select **Open grid comparison** and click **Run**. Use **Pause** and **Step** to watch the selected tile and its scores.
+2. When the search finishes, **Final routes** opens automatically. It shows A* and Dijkstra side by side, each with a green route on a clean copy of the map.
+3. Check that both find a path cost of 8. A* expands 8 tiles and Dijkstra expands 30 on this map. A tile counts as expanded when the algorithm checks its neighbors. Each move costs one unit.
+
+Try **Forced detour** for the familiar six-move path, or **Unreachable goal** to see both algorithms finish without drawing a route. The terminal checkpoint commands above still work.
 
 ## Try the interactive map menu
 
@@ -89,6 +99,20 @@ The terminal leaves one space between tiles so equal row and column counts look 
 Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each step in code.
 
 ## Contribution Log
+
+### 2026-11-22 21:51 MST — Preserve the final-route comparison
+
+- Added a standing requirement in `AGENTS.md` for future desktop iterations to keep side-by-side final route drawings, comparable search metrics, and a clear unreachable result. Verified the open comparison and unreachable cases with the checkpoint test suite.
+
+### 2026-11-22 21:46 MST — Draw the final routes and compare with Dijkstra
+
+- Added `gui.py` on the desktop app branch with step-by-step A* playback and a separate final view that draws both routes. Shared the search in `pathfinding.py` and added `maps/comparison.txt` to demonstrate equal optimal costs with different expansion counts.
+- All fifteen tests passed. A macOS window check verified playback controls, the comparison view, and the unreachable case. On the open comparison map, both algorithms returned cost 8, with 8 tiles expanded by A* and 30 by Dijkstra.
+
+### 2026-11-20 13:01 MST — Expand the desktop app plan for the final project
+
+- Updated `GUI_PLAN.md` on the desktop app branch after reviewing the original worksheet and instructor feedback. The plan now covers static playback, scripted dynamic simulation, cost and outcome definitions, separate Lesson 41 experiments, platform verification, and the conditions for a feature-branch review.
+- Verified the plan links and ran the existing fourteen checkpoint tests. The desktop implementation and experiments are still planned work.
 
 ### 2026-11-20 12:53 MST — Plan the cross-platform desktop app
 
