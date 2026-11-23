@@ -100,6 +100,11 @@ Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each ste
 
 ## Contribution Log
 
+### 2026-11-22 22:32 MST — Polish the Lesson 36 checkpoint write-up
+
+- Rewrote `checkpoint paragraph.md` as a structured Markdown summary of the static prototype, fixed-map results, planned dynamic simulation, and team contributions.
+- All 15 tests passed. Terminal runs confirmed costs of 4 and 6 for the direct and detour maps and reported no path for the unreachable map.
+
 ### 2026-11-22 21:51 MST — Preserve the final-route comparison
 
 - Added a standing requirement in `AGENTS.md` for future desktop iterations to keep side-by-side final route drawings, comparable search metrics, and a clear unreachable result. Verified the open comparison and unreachable cases with the checkpoint test suite.
