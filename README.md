@@ -100,6 +100,10 @@ Follow the numbered comments in [pathfinding.py](pathfinding.py) to see each ste
 
 ## Contribution Log
 
+### 2026-11-22 22:33 MST — Restore the checkpoint paragraph
+
+- Restored the team's original wording in `checkpoint paragraph.md`. Verified the text and ran `git diff --check`.
+
 ### 2026-11-22 22:32 MST — Polish the Lesson 36 checkpoint write-up
 
 - Rewrote `checkpoint paragraph.md` as a structured Markdown summary of the static prototype, fixed-map results, planned dynamic simulation, and team contributions.

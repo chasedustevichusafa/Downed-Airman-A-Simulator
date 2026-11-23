@@ -1,32 +1,17 @@
-# Downed Airman A* Simulation
-
-**CS471 · Checkpoint 1 · Lesson 36**
-
-## Static prototype
-
-We built a working prototype on fixed grids to verify how A* finds the shortest path before introducing moving patrols. Each map has one start tile (`S`) and one extraction tile (`E`). The airman moves one tile at a time up, down, left, or right, and each move costs one unit. A* estimates the moves remaining by counting the horizontal and vertical distance to extraction.
-
-## Checkpoint results
-
-| Fixed map | Result |
-| --- | --- |
-| [Direct route](maps/direct.txt) | 4 moves, path cost 4 |
-| [Forced detour](maps/detour.txt) | 6 moves, path cost 6 |
-| [Unreachable extraction](maps/unreachable.txt) | The search ran out of tiles to check and reported no path. |
-
-The final two lines of the detour trace show the step count and path cost.
-
-```text
-Steps: 6
-Path cost: 6 (one unit per move)
-```
-
-See the [README](README.md#checkpoint-1-testing-procedure-lesson-36) for the demo commands and [project plan](PROJECT_PLAN.md) for later milestones.
-
-## Next steps
-
-We plan to add moving patrols and compare those runs with stationary patrol scenarios using total path cost and tiles expanded. Later iterations could let users configure the map and support multiple extraction points.
-
-## Team contributions
-
-Each team member contributed equally to this checkpoint.
+For our A* Downed Airman Evasion Simulation we began by constructing an
+MVP with a static domain to test the heuristic for A*. This training method
+allows us to build a model that works before adding the complexity of a
+dynamic map domain. Our github repo includes our current working
+prototype and has a detailed read me describing the desired end state from
+our current product. The current training set used a set of fixed maps for
+tests against edge cases such as an unreachable goal state to see how the
+model handles those types of scenarios which are more likely to occur in
+our dynamic model. Our implementation of A* uses simple state
+representation of the map domain with S being the start and E being the
+extraction point. Our test cases only allow a single start point and end point
+but further iterations could include multiple extraction points for added
+complexity in the model. After the dynamic model is introduced we will test
+against stationary patrol runs for efficiency of our model. We expect that
+after the initial static display is confirmed and successful we can implement
+dynamic arrays that allow user input to determine location and setup. Each
+member of our team contributed evenly to this checkpoint.
